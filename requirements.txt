@@ -1,0 +1,32 @@
+# DORM-V4 프로젝트 실행에 필요한 라이브러리 목록입니다.
+# pip install -r requirements.txt 명령으로 한 번에 설치할 수 있습니다.
+
+# PyTorch (CPU 또는 GPU 버전에 맞게 설치)
+# 예: torch==1.13.1+cu117
+torch>=1.13.0
+
+# Hugging Face Transformers (모델 아키텍처, 토크나이저 등)
+transformers>=4.20.0
+
+# 데이터 처리를 위한 라이브러리
+pandas>=1.3.0
+pyarrow>=7.0.0  # Parquet 파일 지원
+
+# 실험 추적 및 로깅
+wandb>=0.13.0
+
+# 과학 계산
+numpy>=1.21.0
+
+# 진행 상황 시각화
+tqdm>=4.62.0
+
+# 설정 관리를 위한 dataclasses (Python 3.7+ 기본 내장)
+# 구버전 Python의 경우 설치 필요: dataclasses
+
+# DORM-V4는 자체 최적화 라이브러리를 사용하므로 추가 의존성이 필요하지 않습니다.
+# 모든 최적화 기능이 utils/optimizer.py에 통합되어 있습니다.
+
+# 고급 최적화 라이브러리에 필요한 의존성
+gputil>=1.4.0
+psutil>=5.8.0

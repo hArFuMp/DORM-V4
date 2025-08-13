@@ -1,0 +1,53 @@
+# Include README and license
+include README.md
+include LICENSE
+include requirements.txt
+
+# Include configuration files
+include *.json
+include *.yaml
+include *.yml
+
+# Include package data
+recursive-include dorm_v4 *.json
+recursive-include dorm_v4 *.yaml
+recursive-include dorm_v4 *.yml
+
+# Include documentation
+recursive-include docs *.md
+recursive-include docs *.rst
+recursive-include docs *.txt
+
+# Include examples
+recursive-include examples *.py
+recursive-include examples *.ipynb
+recursive-include examples *.md
+
+# Include tests
+recursive-include tests *.py
+
+# Exclude unnecessary files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude *.so
+global-exclude .DS_Store
+global-exclude .git*
+global-exclude .hg*
+global-exclude .svn*
+global-exclude .idea
+global-exclude .vscode
+global-exclude *.log
+global-exclude *.tmp
+global-exclude *.bak
+global-exclude *.swp
+global-exclude *.swo
+global-exclude *~
+global-exclude .coverage
+global-exclude .pytest_cache
+global-exclude .mypy_cache
+global-exclude .tox
+global-exclude build
+global-exclude dist
+global-exclude *.egg-info 

@@ -1,0 +1,18 @@
+#Virtual environment
+.venv/
+ 
+# Python cache
+_pycache__/
+*.pyc
+
+# Generated data
+*.bin
+# Logs and checkpoints
+wandb/
+checkpoints/
+# IDE files
+.vscode/
+# Other generated files
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
