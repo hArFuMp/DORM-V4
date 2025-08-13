@@ -1,6 +1,4 @@
-<p align="right">
-  English Version | <a href="README.md">한국어 버전</a>
-</p>
+
 
 <!--
 
