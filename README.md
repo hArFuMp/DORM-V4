@@ -7,6 +7,9 @@
 # DORM-V4: Slot-based Dynamic Optimization Framework for Transformers
 
 -->
+<p align="right">
+  <a href="ENGREADME.md">English Version</a> | <a href="READ.md">한국어 버전</a>
+</p>
 
 <p align="center">
   <a href="#-disclaimer--current-status"><b>⚠️ 프로젝트 상태: 실험적 ⚠️</b></a>
@@ -18,7 +21,7 @@
   <b>저사양 GPU에서도 거대 언어 모델을 효율적으로 훈련시키고 싶으신가요?</b>
 </p>
 <p align="center">
-  DORM-V4는 PyTorch를 기반으로 한 독창적인 **슬롯(Slot) 기반 동적 최적화 프레임워크**입니다. 한정된 리소스 환경의 연구자, 학생, 스타트업을 위해, 최소한의 자원으로 최대의 성능을 이끌어내는 것을 목표로 합니다.
+  DORM-V4는 PyTorch를 기반으로 한 독창적인 슬롯(Slot) 기반 동적 최적화 프레임워크입니다. 한정된 리소스 환경의 연구자, 학생, 스타트업을 위해, 최소한의 자원으로 최대의 성능을 이끌어내는 것을 목표로 합니다.
 </p>
 
 ---
