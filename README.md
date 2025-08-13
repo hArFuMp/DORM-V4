@@ -1,6 +1,3 @@
-<p align="right">
-  <a href="ENGREADME.MD">English Version</a> | 한국어 버전
-</p>
 
 <!--
 
