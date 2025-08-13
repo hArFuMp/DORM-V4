@@ -3,6 +3,9 @@
 # DORM-V4: Slot-based Dynamic Optimization Framework for Transformers
 
 -->
+<p align="right">
+  <a href="ENGREADME.MD">English Version</a> | 한국어 버전
+</p>
 
 <p align="center">
   <a href="#-disclaimer--current-status"><b>⚠️ 프로젝트 상태: 실험적 ⚠️</b></a>
