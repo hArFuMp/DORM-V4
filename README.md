@@ -1,3 +1,7 @@
+<p align="right">
+  <a href="ENGREADME.MD">English Version</a> | 한국어 버전
+</p>
+
 <!--
 
 # DORM-V4: Slot-based Dynamic Optimization Framework for Transformers
@@ -98,11 +102,15 @@ DORM-V4는 두 가지 핵심 아이디어를 기반으로 동작합니다.
 
 ### 2단계: 학습 시작
 
+데이터 전처리가 완료되면, 다음 명령어로 학습을 시작합니다.
+
 ```bash
 python dorm_v4/main.py
 ```
 
 ### 3단계: 자신만의 프로젝트에 적용하기
+
+`DORMV4AdvancedOptimizer`를 자신의 커스텀 학습 루프에 적용하는 방법의 예시입니다.
 
 ```python
 import torch

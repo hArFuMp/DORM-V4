@@ -6,7 +6,7 @@ from torch.optim import AdamW
 import time
 import os
 
-# DORM-V4 통합 최적화 라이브러리
+# DORM-V4 Optimization Library
 from utils.optimizer import (
     ModelOptimizer, 
     AdvancedGradScaler, 
@@ -21,37 +21,36 @@ from utils.logger import setup_wandb
 from dorm_v4 import DORMV4AdvancedOptimizer
 
 def main():
-    """ DORM-V4의 전체 학습 파이프라인을 실행합니다. """
+    """Executes the full DORM-V4 training pipeline."""
     
-    # 1. 설정 로드
+    # 1. Load configurations
     config = ProjectConfig()
     model_config_dict = vars(config.model)
     data_config = config.data
     train_config = config.training
 
-    # 2. 로깅 설정 (Wandb)
+    # 2. Setup logging (Wandb)
     wandb_run = setup_wandb(train_config, config.model)
 
-    # 3. 토크나이저 로드 (vocab_size 설정용)
-    # 데이터 로딩 자체는 preprocess.py에서 이미 완료됨
+    # 3. Load tokenizer (for vocab_size setting)
     tokenizer_path = os.path.join("DORM-V4", "tokenizer.json")
     if not os.path.exists(tokenizer_path):
-        print(f"오류: 토크나이저 파일({tokenizer_path})을 찾을 수 없습니다.")
+        print(f"Error: Tokenizer file({tokenizer_path}) not found.")
         return
     tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_path)
     model_config_dict['vocab_size'] = tokenizer.vocab_size
     model_config = GPT2Config(**model_config_dict)
 
-    # 4. 데이터로더 준비 (미리 토큰화된 .bin 파일 사용)
+    # 4. Prepare dataloaders (using pre-tokenized .bin files)
     try:
         train_dataloader, eval_dataloader = get_dataloader(data_config, use_pretokenized=True)
-        print("미리 토큰화된 데이터로더가 준비되었습니다.")
+        print("Pre-tokenized dataloaders prepared.")
     except FileNotFoundError as e:
-        print(f"데이터 로딩 중 오류 발생: {e}")
-        print("먼저 `python DORM-V4/dorm_v4/preprocess.py`를 실행하세요.")
+        print(f"Error during data loading: {e}")
+        print("Please run `python DORM-V4/dorm_v4/preprocess.py` first.")
         return
 
-    # 5. 모델, 옵티마이저, 및 고급 최적화 매니저 초기화
+    # 5. Initialize model, optimizer, and DORM-V4 advanced optimizer manager
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
     
@@ -84,11 +83,13 @@ def main():
     }
     advanced_optimizer = DORMV4AdvancedOptimizer(model_config.n_layer, device, advanced_optimizer_config)
     
-    print("DORM-V4 Advanced Optimizer가 성공적으로 초기화되었습니다.")
+    print("DORM-V4 Advanced Optimizer initialized successfully.")
 
-    # 6. 학습 루프 시작
-    print("\n--- 학습을 시작합니다 ---")
+    # 6. Start training loop
+    print("\n--- Starting Training ---")
     global_step = 0
+    last_metrics = {}
+
     for epoch in range(train_config.num_train_epochs):
         model.train()
         progress_bar = tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{train_config.num_train_epochs}")
@@ -100,10 +101,14 @@ def main():
             input_ids = input_ids.to(device)
             labels = labels.to(device)
 
-            training_params = advanced_optimizer.get_training_config(epoch, global_step, accumulated_metrics)
+            # Get optimized settings from DORM-V4 optimizer
+            current_metrics = {'loss': accumulated_metrics.get('loss', 0), 'accuracy': accumulated_metrics.get('accuracy', 0)}
+            training_params = advanced_optimizer.get_training_config(epoch, global_step, current_metrics)
             active_slots = training_params['active_slots']
             precision_context = training_params['precision_context']
 
+            # Perform Forward & Backward pass
+            optimizer.zero_grad()
             with precision_context:
                 logits = model(input_ids, attention_mask=None, active_slots=active_slots)
                 loss = torch.nn.functional.cross_entropy(logits.view(-1, model_config.vocab_size), labels.view(-1))
@@ -118,9 +123,10 @@ def main():
             lr_scheduler.step()
             global_step += 1
 
-            # 메트릭 누적
+            # Accumulate metrics
             accumulated_metrics['loss'] = accumulated_metrics.get('loss', 0) + loss.item()
             
+            # Logging (every logging_interval steps)
             if (step + 1) % train_config.logging_interval == 0:
                 avg_loss = accumulated_metrics['loss'] / train_config.logging_interval
                 log_data = {'train_loss': avg_loss, 'epoch': epoch + 1, 'step': global_step}
@@ -130,14 +136,14 @@ def main():
 
             profiler.end_timer("training_step")
 
-        # --- Epoch 종료 후 평가 ---
+        # --- Evaluation after each Epoch ---
         model.eval()
         eval_loss = 0
         with torch.no_grad():
             for (input_ids, labels) in tqdm(eval_dataloader, desc=f"Evaluating Epoch {epoch+1}"):
                 input_ids = input_ids.to(device)
                 labels = labels.to(device)
-                # 평가 시에는 모든 슬롯을 활성화
+                # Activate all slots for evaluation
                 all_slots = torch.ones(model_config.n_layer, dtype=torch.bool, device=device)
                 logits = model(input_ids, attention_mask=None, active_slots=all_slots)
                 loss = torch.nn.functional.cross_entropy(logits.view(-1, model_config.vocab_size), labels.view(-1))
@@ -147,7 +153,7 @@ def main():
         print(f"Epoch {epoch+1} | Validation Loss: {avg_eval_loss:.4f}")
         if wandb_run: wandb_run.log({"eval_loss": avg_eval_loss, "epoch": epoch + 1})
 
-    print("--- 학습이 완료되었습니다 ---")
+    print("--- Training Complete ---")
     profiler.print_summary()
 
 if __name__ == '__main__':

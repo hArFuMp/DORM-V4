@@ -26,7 +26,7 @@ from .utils.optimizer import (
     create_optimized_training_loop,
 )
 
-# Advanced optimization library (DORM-V4 핵심 혁신 기법) - v2로 변경
+# Advanced optimization library (DORM-V4 core innovation) - changed to v2
 from .utils.advanced_optimizer_v2 import (
     DORMV4AdvancedOptimizer,
 )
@@ -61,7 +61,7 @@ __all__ = [
     "ModelOptimizer",
     "create_optimized_training_loop",
     
-    # Advanced Optimization (DORM-V4 핵심 혁신 기법) - v2 사용
+    # Advanced Optimization (DORM-V4 core innovation) - using v2
     "DORMV4AdvancedOptimizer",
     # "AdaptiveBatchSizing",
     # "SlotFusionScheduler", 

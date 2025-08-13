@@ -1,6 +1,6 @@
 """
-DORM-V4 통합 최적화 라이브러리
-모든 최적화 기능을 하나로 통합하여 외부 의존성 없이 고성능 학습을 제공합니다.
+DORM-V4 Integrated Optimization Library
+Provides high-performance training by integrating all optimization features without external dependencies.
 """
 
 import torch
@@ -14,8 +14,8 @@ import warnings
 
 class FastAttention(nn.Module):
     """
-    FlashAttention 없이도 빠른 어텐션을 구현한 커스텀 모듈
-    메모리 효율적인 어텐션 연산을 제공합니다.
+    Custom module for fast attention without FlashAttention.
+    Provides memory-efficient attention operations.
     """
     def __init__(self, d_model: int, n_heads: int, dropout: float = 0.1):
         super().__init__()
@@ -34,24 +34,24 @@ class FastAttention(nn.Module):
     def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
         batch_size, seq_len, d_model = x.shape
         
-        # Q, K, V 계산
+        # Calculate Q, K, V
         Q = self.w_q(x).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
         K = self.w_k(x).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
         V = self.w_v(x).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
         
-        # 스케일드 닷 프로덕트 어텐션 (메모리 효율적)
+        # Scaled Dot Product Attention (memory efficient)
         scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_k)
         
         if mask is not None:
-            # 마스크 적용
+            # Apply mask
             mask = mask.unsqueeze(1).unsqueeze(1)  # (batch, 1, 1, seq_len)
             scores = scores.masked_fill(mask == 0, -1e9)
         
-        # 소프트맥스 및 드롭아웃
+        # Softmax and Dropout
         attn_weights = F.softmax(scores, dim=-1)
         attn_weights = self.dropout_layer(attn_weights)
         
-        # 어텐션 출력 계산
+        # Calculate attention output
         context = torch.matmul(attn_weights, V)
         context = context.transpose(1, 2).contiguous().view(batch_size, seq_len, d_model)
         
@@ -59,8 +59,8 @@ class FastAttention(nn.Module):
 
 class MemoryOptimizer:
     """
-    메모리 최적화를 위한 유틸리티 클래스
-    DeepSpeed 없이도 메모리 효율적인 학습을 제공합니다.
+    Utility class for memory optimization.
+    Provides memory-efficient training without DeepSpeed.
     """
     def __init__(self, model: nn.Module, device: torch.device):
         self.model = model
@@ -70,56 +70,56 @@ class MemoryOptimizer:
         
     def optimize_memory(self, optimization_level: int = 1):
         """
-        메모리 최적화 레벨:
-        0: 최적화 없음
-        1: 기본 최적화 (gradient checkpointing)
-        2: 고급 최적화 (parameter offloading)
+        Applies memory optimization based on level:
+        0: No optimization
+        1: Basic optimization (gradient checkpointing)
+        2: Advanced optimization (parameter offloading)
         """
         if optimization_level >= 1:
-            # Gradient checkpointing 적용 (안전한 호출)
+            # Apply Gradient checkpointing (safe call)
             if hasattr(self.model, 'gradient_checkpointing_enable'):
                 self.model.gradient_checkpointing_enable()
-                print("Gradient checkpointing 활성화됨")
+                print("Gradient checkpointing enabled")
             else:
-                # SlotTransformer 등 커스텀 모델의 경우 수동으로 적용
+                # Manual application for custom models like SlotTransformer
                 self._apply_gradient_checkpointing_manual()
-                print("수동 Gradient checkpointing 활성화됨")
+                print("Manual Gradient checkpointing enabled")
             
         if optimization_level >= 2:
-            # 파라미터 오프로딩 (CPU 메모리 활용)
+            # Enable parameter offloading (utilize CPU memory)
             self._enable_parameter_offloading()
-            print("Parameter offloading 활성화됨")
+            print("Parameter offloading enabled")
     
     def _apply_gradient_checkpointing_manual(self):
-        """커스텀 모델에 대한 수동 gradient checkpointing 적용"""
-        # SlotTransformer의 경우 각 slot에 대해 적용
+        """Applies manual gradient checkpointing for custom models."""
+        # For SlotTransformer, apply to each slot
         if hasattr(self.model, 'slots'):
             for slot in self.model.slots:
                 if hasattr(slot, 'gradient_checkpointing_enable'):
                     slot.gradient_checkpointing_enable()
         
-        # 일반적인 nn.Module의 경우
+        # For general nn.Module
         for module in self.model.modules():
             if hasattr(module, 'gradient_checkpointing_enable'):
                 module.gradient_checkpointing_enable()
     
     def _enable_parameter_offloading(self):
-        """큰 파라미터들을 CPU로 오프로딩"""
+        """Offloads large parameters to CPU."""
         for name, param in self.model.named_parameters():
-            if param.numel() > 1e6:  # 1M 파라미터 이상
+            if param.numel() > 1e6:  # Parameters larger than 1M
                 self.original_params[name] = param.data.clone()
                 param.data = param.data.cpu()
                 self.optimized_params[name] = param
     
     def restore_parameters(self):
-        """오프로딩된 파라미터들을 GPU로 복원"""
+        """Restores offloaded parameters to GPU."""
         for name, param in self.optimized_params.items():
             if name in self.original_params:
                 param.data = self.original_params[name].to(self.device)
 
 class AdvancedGradScaler(GradScaler):
     """
-    고급 GradScaler - 더 안정적이고 효율적인 mixed precision 학습
+    Advanced GradScaler for more stable and efficient mixed precision training.
     """
     def __init__(self, 
                  init_scale: float = 2**10,
@@ -133,34 +133,34 @@ class AdvancedGradScaler(GradScaler):
         self.total_steps = 0
         
     def step(self, optimizer, *args, **kwargs):
-        """NaN/Inf 체크가 포함된 고급 step"""
+        """Advanced step with NaN/Inf check."""
         self.total_steps += 1
         
-        # NaN/Inf 체크
+        # NaN/Inf check
         if self._found_inf:
             self.nan_count += 1
-            if self.nan_count > 10:  # 10번 연속 NaN이면 스케일 축소
+            if self.nan_count > 10:  # Scale down if 10 consecutive NaNs
                 self._scale = max(self._scale * self._backoff_factor, 1.0)
                 self.nan_count = 0
-                print(f"NaN 감지로 스케일 축소: {self._scale}")
+                print(f"Scale reduced due to NaN detection: {self._scale}")
         
         return super().step(optimizer, *args, **kwargs)
 
 class PerformanceProfiler:
     """
-    성능 프로파일링을 위한 커스텀 클래스
-    PyTorch Profiler 없이도 성능 분석을 제공합니다.
+    Custom class for performance profiling.
+    Provides performance analysis without PyTorch Profiler.
     """
     def __init__(self):
         self.metrics = {}
         self.start_times = {}
         
     def start_timer(self, name: str):
-        """타이머 시작"""
+        """Starts a timer."""
         self.start_times[name] = time.time()
         
     def end_timer(self, name: str):
-        """타이머 종료 및 기록"""
+        """Ends a timer and records duration."""
         if name in self.start_times:
             duration = time.time() - self.start_times[name]
             if name not in self.metrics:
@@ -169,7 +169,7 @@ class PerformanceProfiler:
             del self.start_times[name]
     
     def get_stats(self, name: str) -> Dict[str, float]:
-        """통계 정보 반환"""
+        """Returns statistical information."""
         if name not in self.metrics:
             return {}
         
@@ -182,23 +182,23 @@ class PerformanceProfiler:
         }
     
     def print_summary(self):
-        """성능 요약 출력"""
-        print("\n=== 성능 프로파일링 결과 ===")
+        """Prints a performance summary."""
+        print("\n=== Performance Profiling Summary ===")
         for name, stats in self.metrics.items():
             if stats:
                 mean_time = sum(stats) / len(stats)
-                print(f"{name}: {mean_time:.4f}s (평균), {len(stats)}회 실행")
+                print(f"{name}: {mean_time:.4f}s (avg), {len(stats)} runs")
 
 class DataLoaderOptimizer:
     """
-    DataLoader 최적화를 위한 유틸리티
+    Utility for DataLoader optimization.
     """
     @staticmethod
     def optimize_dataloader(dataloader, 
                           num_workers: int = 8,
                           pin_memory: bool = True,
                           prefetch_factor: int = 2):
-        """DataLoader 최적화 설정"""
+        """Sets DataLoader optimization options."""
         dataloader.num_workers = num_workers
         dataloader.pin_memory = pin_memory
         if hasattr(dataloader, 'prefetch_factor'):
@@ -207,7 +207,7 @@ class DataLoaderOptimizer:
 
 class LearningRateScheduler:
     """
-    고급 학습률 스케줄러
+    Advanced learning rate scheduler.
     """
     @staticmethod
     def create_scheduler(optimizer, 
@@ -215,7 +215,7 @@ class LearningRateScheduler:
                         num_warmup_steps: int = 1000,
                         num_training_steps: int = 10000,
                         min_lr: float = 1e-7):
-        """다양한 스케줄러 생성"""
+        """Creates various schedulers."""
         if scheduler_type == "cosine":
             return torch.optim.lr_scheduler.CosineAnnealingLR(
                 optimizer, T_max=num_training_steps, eta_min=min_lr
@@ -233,7 +233,7 @@ class LearningRateScheduler:
 
 class ModelOptimizer:
     """
-    모델 최적화를 위한 통합 클래스
+    Integrated class for model optimization.
     """
     def __init__(self, model: nn.Module, device: torch.device):
         self.model = model
@@ -245,37 +245,37 @@ class ModelOptimizer:
                           compile_model: bool = True,
                           memory_optimization: int = 1,
                           enable_fast_attention: bool = True):
-        """모든 최적화 적용"""
+        """Applies all optimizations."""
         
-        # 1. torch.compile 적용
+        # 1. Apply torch.compile
         if compile_model:
             try:
                 self.model = torch.compile(self.model, mode="reduce-overhead")
-                print("torch.compile 적용됨")
+                print("torch.compile applied")
             except Exception as e:
-                print(f"torch.compile 적용 실패: {e}")
+                print(f"torch.compile failed: {e}")
         
-        # 2. 메모리 최적화
+        # 2. Memory optimization
         self.memory_optimizer.optimize_memory(memory_optimization)
         
-        # 3. FastAttention 적용
+        # 3. Apply FastAttention
         if enable_fast_attention:
             self._replace_attention_layers()
         
         return self.model
     
     def _replace_attention_layers(self):
-        """기존 attention을 FastAttention으로 교체"""
+        """Replaces existing attention with FastAttention."""
         for name, module in self.model.named_modules():
             if "attn" in name.lower() and isinstance(module, nn.MultiheadAttention):
-                # MultiheadAttention을 FastAttention으로 교체
+                # Replace MultiheadAttention with FastAttention
                 d_model = module.embed_dim
                 n_heads = module.num_heads
                 dropout = module.dropout.p if hasattr(module.dropout, 'p') else 0.1
                 
                 fast_attn = FastAttention(d_model, n_heads, dropout)
-                # 모듈 교체 로직 (실제 구현에서는 더 복잡)
-                print(f"FastAttention으로 교체: {name}")
+                # Module replacement logic (more complex in real implementation)
+                print(f"Replaced with FastAttention: {name}")
 
 def create_optimized_training_loop(model: nn.Module,
                                  dataloader,
@@ -283,7 +283,7 @@ def create_optimized_training_loop(model: nn.Module,
                                  device: torch.device,
                                  config: Dict[str, Any]):
     """
-    최적화된 학습 루프 생성
+    Creates an optimized training loop.
     """
     model_optimizer = ModelOptimizer(model, device)
     model = model_optimizer.apply_optimizations(
@@ -303,20 +303,20 @@ def create_optimized_training_loop(model: nn.Module,
     
     return model, scaler, profiler
 
-# 사용 예시
+# Example usage
 if __name__ == "__main__":
-    # 테스트 코드
+    # Test code
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    # 간단한 모델 생성
+    # Create a simple model
     model = nn.Sequential(
         nn.Linear(100, 200),
         nn.ReLU(),
         nn.Linear(200, 100)
     ).to(device)
     
-    # 최적화 적용
+    # Apply optimizations
     model_optimizer = ModelOptimizer(model, device)
     optimized_model = model_optimizer.apply_optimizations()
     
-    print("최적화 완료!") 
+    print("Optimization complete!")
