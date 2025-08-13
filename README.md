@@ -4,7 +4,7 @@
 
 -->
 <p align="right">
-  <a href="ENGREADME.MD">English Version</a> | 한국어 버전
+  <a href="ENGREADME.md">English Version</a> | 한국어 버전
 </p>
 
 <p align="center">
